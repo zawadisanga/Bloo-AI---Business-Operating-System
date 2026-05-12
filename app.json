@@ -1,0 +1,32 @@
+{
+  "name": "bloo-ai-enterprise",
+  "description": "Bloo AI Enterprise - Complete Business Operating System",
+  "repository": "https://github.com/yourusername/bloo-ai-enterprise",
+  "logo": "https://yourdomain.com/logo.png",
+  "keywords": ["ai", "business", "automation", "enterprise"],
+  "env": {
+    "JWT_SECRET": {
+      "description": "A secret key for verifying JWT tokens",
+      "generator": "secret"
+    },
+    "NODE_ENV": {
+      "description": "Environment",
+      "value": "production"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "npm run seed"
+  }
+}
