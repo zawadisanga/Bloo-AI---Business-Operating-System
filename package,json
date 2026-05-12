@@ -1,12 +1,11 @@
 {
   "name": "bloo-ai-heroku",
   "version": "1.0.0",
-  "description": "Bloo AI - Complete Business OS for Heroku",
+  "description": "Bloo AI - Complete Business Operating System for Heroku",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "heroku-postbuild": "echo 'Build completed'"
+    "dev": "nodemon server.js"
   },
   "engines": {
     "node": "20.x",
@@ -21,9 +20,7 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.1",
-    "dotenv": "^16.3.1",
-    "pg": "^8.11.3",
-    "multer": "^1.4.5-lts.1"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
