@@ -73,4 +73,13 @@ function optionalAuth(req, res, next) {
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'bloo-ai-secret');
-      req.userId = decoded.id
+      req.userId = decoded.id;
+      req.userEmail = decoded.email;
+    } catch (error) {
+      // Ignore invalid token for optional auth
+    }
+  }
+  next();
+}
+
+module.exports = { authMiddleware, adminOnly, optionalAuth };
