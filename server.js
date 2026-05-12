@@ -1,4 +1,4 @@
-// /var/www/bloo-ai/backend/server.js
+// server.js - Bloo AI for Heroku
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,39 +9,56 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const axios = require('axios');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'bloo-ai-super-secret-key-2024';
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // For inline scripts in HTML
+}));
 app.use(compression());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
-// Rate limiting
+// Rate limiting for Heroku
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'production' ? 200 : 1000,
   message: { error: 'Too many requests, please try again later.' }
 });
 app.use('/api/', limiter);
 
-// Data paths
-const DATA_PATH = '/var/www/bloo-ai/data';
+// Data paths (Heroku compatible)
+const DATA_PATH = process.env.DATA_PATH || path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_PATH, 'users.json');
 const BUSINESSES_FILE = path.join(DATA_PATH, 'businesses.json');
 const MESSAGES_FILE = path.join(DATA_PATH, 'messages.json');
 const AGENTS_FILE = path.join(DATA_PATH, 'agents.json');
 const AUTOMATIONS_FILE = path.join(DATA_PATH, 'automations.json');
 const SUBSCRIPTIONS_FILE = path.join(DATA_PATH, 'subscriptions.json');
+const INTERVIEWS_FILE = path.join(DATA_PATH, 'interviews.json');
+const OUTREACH_FILE = path.join(DATA_PATH, 'outreach.json');
+const MARKETPLACE_FILE = path.join(DATA_PATH, 'marketplace.json');
+
+// Ensure data directory exists
+async function ensureDataDir() {
+  try {
+    await fs.access(DATA_PATH);
+  } catch {
+    await fs.mkdir(DATA_PATH, { recursive: true });
+  }
+}
 
 // Initialize JSON files
 async function initDataFiles() {
-  const files = [USERS_FILE, BUSINESSES_FILE, MESSAGES_FILE, AGENTS_FILE, AUTOMATIONS_FILE, SUBSCRIPTIONS_FILE];
+  await ensureDataDir();
+  const files = [USERS_FILE, BUSINESSES_FILE, MESSAGES_FILE, AGENTS_FILE, AUTOMATIONS_FILE, 
+                 SUBSCRIPTIONS_FILE, INTERVIEWS_FILE, OUTREACH_FILE, MARKETPLACE_FILE];
   for (const file of files) {
     try {
       await fs.access(file);
@@ -54,8 +71,12 @@ initDataFiles();
 
 // Helper functions
 async function readJSON(file) {
-  const data = await fs.readFile(file, 'utf8');
-  return JSON.parse(data);
+  try {
+    const data = await fs.readFile(file, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
 }
 
 async function writeJSON(file, data) {
@@ -85,7 +106,7 @@ app.post('/api/auth/register', async (req, res) => {
       businessName: businessName || email.split('@')[0],
       plan,
       createdAt: new Date().toISOString(),
-      credits: plan === 'enterprise' ? 10000 : 100
+      credits: plan === 'enterprise' ? 10000 : plan === 'growth' ? 1000 : 100
     };
     
     users.push(user);
@@ -98,19 +119,28 @@ app.post('/api/auth/register', async (req, res) => {
       name: user.businessName,
       ownerId: user.id,
       plan,
-      createdAt: new Date().toISOString(),
       revenue: 0,
       costs: 0,
-      customers: 0
+      customers: 0,
+      createdAt: new Date().toISOString()
     });
     await writeJSON(BUSINESSES_FILE, businesses);
     
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
     
-    res.json({ token, user: { id: user.id, email: user.email, businessName: user.businessName, plan: user.plan } });
+    res.json({ 
+      success: true,
+      token, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        businessName: user.businessName, 
+        plan: user.plan 
+      } 
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
@@ -127,14 +157,23 @@ app.post('/api/auth/login', async (req, res) => {
     
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
     
-    res.json({ token, user: { id: user.id, email: user.email, businessName: user.businessName, plan: user.plan } });
+    res.json({ 
+      success: true,
+      token, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        businessName: user.businessName, 
+        plan: user.plan 
+      } 
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
 // Auth middleware
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
   
@@ -152,18 +191,16 @@ app.post('/api/ai/ceo/advice', authMiddleware, async (req, res) => {
   try {
     const { revenue, costs, customers, industry = 'general' } = req.body;
     
-    // Intelligent AI logic without external API (100% self-contained)
     const profit = revenue - costs;
     const profitMargin = revenue > 0 ? (profit / revenue * 100) : 0;
     
     let advice = [];
     let actions = [];
     
-    // Profit analysis
     if (profitMargin < 10) {
-      advice.push(`⚠️ Your profit margin is only ${profitMargin.toFixed(1)}%. This is critical.`);
+      advice.push(`⚠️ Critical: Your profit margin is only ${profitMargin.toFixed(1)}%`);
       actions.push('Reduce operational costs by 15-20% through automation');
-      actions.push('Increase prices by 5-10% for your top 20% customers');
+      actions.push('Increase prices by 5-10% for top customers');
       actions.push('Cut non-performing marketing channels immediately');
     } else if (profitMargin < 25) {
       advice.push(`📊 Your profit margin is ${profitMargin.toFixed(1)}%. Room for improvement.`);
@@ -173,17 +210,15 @@ app.post('/api/ai/ceo/advice', authMiddleware, async (req, res) => {
     } else {
       advice.push(`✅ Excellent profit margin at ${profitMargin.toFixed(1)}%. Time to scale.`);
       actions.push('Invest 30% of profits into aggressive marketing');
-      actions.push('Hire 2 new sales people (or AI agents)');
+      actions.push('Hire 2 new AI agents or sales people');
       actions.push('Expand to 2 new regions/cities');
     }
     
-    // Customer insights
     const avgRevenuePerCustomer = customers > 0 ? revenue / customers : 0;
     if (avgRevenuePerCustomer < 50) {
       actions.push(`Increase average transaction from $${avgRevenuePerCustomer.toFixed(0)} to $75 via upselling`);
     }
     
-    // Growth strategies
     const strategies = [
       `Launch WhatsApp marketing campaign to reach ${customers} customers`,
       `Implement referral program (give 20% discount for referrals)`,
@@ -220,7 +255,6 @@ app.post('/api/ai/hr/analyze-cv', authMiddleware, async (req, res) => {
   try {
     const { candidateName, skills, experience, education, position } = req.body;
     
-    // Calculate match score (internal AI logic)
     let score = 0;
     let feedback = [];
     
@@ -237,13 +271,11 @@ app.post('/api/ai/hr/analyze-cv', authMiddleware, async (req, res) => {
     const matchedSkills = reqSkills.filter(s => candidateSkills.some(cs => cs.includes(s)));
     score += (matchedSkills.length / reqSkills.length) * 60;
     
-    // Experience scoring
     const expYears = parseInt(experience) || 0;
     if (expYears >= 5) score += 20;
     else if (expYears >= 3) score += 15;
     else if (expYears >= 1) score += 8;
     
-    // Education scoring
     const edu = (education || '').toLowerCase();
     if (edu.includes('bachelor') || edu.includes('degree')) score += 10;
     if (edu.includes('master') || edu.includes('phd')) score += 5;
@@ -284,8 +316,7 @@ app.post('/api/ai/hr/schedule-interview', authMiddleware, async (req, res) => {
   try {
     const { candidateEmail, candidateName, position, date, time } = req.body;
     
-    // Store interview in JSON
-    const interviews = await readJSON(path.join(DATA_PATH, 'interviews.json'));
+    const interviews = await readJSON(INTERVIEWS_FILE);
     const interview = {
       id: uuidv4(),
       candidateEmail,
@@ -297,7 +328,7 @@ app.post('/api/ai/hr/schedule-interview', authMiddleware, async (req, res) => {
       createdAt: new Date().toISOString()
     };
     interviews.push(interview);
-    await writeJSON(path.join(DATA_PATH, 'interviews.json'), interviews);
+    await writeJSON(INTERVIEWS_FILE, interviews);
     
     res.json({
       success: true,
@@ -339,10 +370,10 @@ app.post('/api/ai/support/chat', authMiddleware, async (req, res) => {
     const { message, language = 'en' } = req.body;
     const msg = message.toLowerCase();
     
-    // Store message
     const messages = await readJSON(MESSAGES_FILE);
+    const messageId = uuidv4();
     messages.push({
-      id: uuidv4(),
+      id: messageId,
       userId: req.userId,
       message,
       language,
@@ -350,7 +381,6 @@ app.post('/api/ai/support/chat', authMiddleware, async (req, res) => {
       response: ''
     });
     
-    // Intelligent response matching
     let response = supportResponses[language]?.default || supportResponses['en'].default;
     
     if (msg.includes('hello') || msg.includes('hi') || msg.includes('karibu') || msg.includes('jambo')) {
@@ -365,8 +395,8 @@ app.post('/api/ai/support/chat', authMiddleware, async (req, res) => {
       response = supportResponses[language]?.hours || supportResponses['en'].hours;
     }
     
-    // Update message with response
-    messages[messages.length - 1].response = response;
+    const index = messages.findIndex(m => m.id === messageId);
+    if (index !== -1) messages[index].response = response;
     await writeJSON(MESSAGES_FILE, messages);
     
     res.json({
@@ -389,22 +419,22 @@ app.post('/api/ai/sales/outreach', authMiddleware, async (req, res) => {
       `Hello ${prospectName}, I noticed your ${prospectIndustry} business. We help companies like yours increase sales by 40% using AI automation. Can we schedule a 10-min demo?`,
       `Hi ${prospectName}, ${prospectSize} employees managing repetitive tasks costs you $50k+/year. Our AI agents automate 70% of that. Interested?`,
       `Dear ${prospectName}, Businesses in ${prospectIndustry} are saving $10k/month with Bloo AI. See how →`,
-      `Hey ${prospectName}, Quick question: Would automating your WhatsApp customer support free up 20 hours/week for your team? That's what we do.`
+      `Hey ${prospectName}, Quick question: Would automating your customer support free up 20 hours/week for your team? That's what we do.`
     ];
     
     const selectedTemplate = templates[Math.floor(Math.random() * templates.length)];
     
-    // Store outreach
-    const outreach = await readJSON(path.join(DATA_PATH, 'outreach.json'));
+    const outreach = await readJSON(OUTREACH_FILE);
     outreach.push({
       id: uuidv4(),
+      userId: req.userId,
       prospectName,
       industry: prospectIndustry,
       message: selectedTemplate,
       status: 'sent',
       createdAt: new Date().toISOString()
     });
-    await writeJSON(path.join(DATA_PATH, 'outreach.json'), outreach);
+    await writeJSON(OUTREACH_FILE, outreach);
     
     res.json({
       success: true,
@@ -435,7 +465,6 @@ app.post('/api/ai/accountant/analyze', authMiddleware, async (req, res) => {
         categories[cat] = (categories[cat] || 0) + Math.abs(t.amount);
       }
     } else {
-      // Sample data for demo
       totalIncome = 50000;
       totalExpense = 32000;
       categories = {
@@ -489,8 +518,8 @@ app.post('/api/automation/create', authMiddleware, async (req, res) => {
       userId: req.userId,
       trigger,
       action,
-      triggerDetails,
-      actionDetails,
+      triggerDetails: triggerDetails || {},
+      actionDetails: actionDetails || {},
       status: 'active',
       runs: 0,
       lastRun: null,
@@ -524,26 +553,25 @@ app.post('/api/automation/trigger', authMiddleware, async (req, res) => {
   try {
     const { automationId, payload } = req.body;
     const automations = await readJSON(AUTOMATIONS_FILE);
-    const automation = automations.find(a => a.id === automationId);
+    const index = automations.findIndex(a => a.id === automationId);
     
-    if (!automation) {
+    if (index === -1) {
       return res.status(404).json({ error: 'Automation not found' });
     }
     
-    automation.runs++;
-    automation.lastRun = new Date().toISOString();
+    automations[index].runs++;
+    automations[index].lastRun = new Date().toISOString();
     await writeJSON(AUTOMATIONS_FILE, automations);
     
-    // Simulate action
     const actionResult = {
       status: 'executed',
       at: new Date().toISOString(),
-      details: `${automation.action} completed successfully`
+      details: `${automations[index].action} completed successfully`
     };
     
     res.json({
       success: true,
-      message: `Automation triggered: ${automation.trigger} → ${automation.action}`,
+      message: `Automation triggered: ${automations[index].trigger} → ${automations[index].action}`,
       result: actionResult
     });
   } catch (error) {
@@ -570,7 +598,7 @@ app.get('/api/dashboard/stats', authMiddleware, async (req, res) => {
           totalMessages: userMessages.length,
           totalAutomations: userAutomations.length,
           automationRuns: userAutomations.reduce((sum, a) => sum + (a.runs || 0), 0),
-          activeAgents: 5 // AI CEO, HR, Support, Sales, Accountant
+          activeAgents: 5
         },
         recentMessages: userMessages.slice(-10).reverse()
       }
@@ -603,7 +631,6 @@ app.post('/api/subscription/upgrade', authMiddleware, async (req, res) => {
     users[userIndex].credits = plan === 'enterprise' ? 10000 : plan === 'growth' ? 1000 : 100;
     await writeJSON(USERS_FILE, users);
     
-    // Update business
     const businesses = await readJSON(BUSINESSES_FILE);
     const businessIndex = businesses.findIndex(b => b.ownerId === req.userId);
     if (businessIndex !== -1) {
@@ -627,7 +654,7 @@ app.post('/api/marketplace/list', authMiddleware, async (req, res) => {
   try {
     const { name, description, price, category } = req.body;
     
-    const listings = await readJSON(path.join(DATA_PATH, 'marketplace.json'));
+    const listings = await readJSON(MARKETPLACE_FILE);
     const listing = {
       id: uuidv4(),
       sellerId: req.userId,
@@ -640,7 +667,7 @@ app.post('/api/marketplace/list', authMiddleware, async (req, res) => {
     };
     
     listings.push(listing);
-    await writeJSON(path.join(DATA_PATH, 'marketplace.json'), listings);
+    await writeJSON(MARKETPLACE_FILE, listings);
     
     res.json({ success: true, data: listing });
   } catch (error) {
@@ -650,15 +677,15 @@ app.post('/api/marketplace/list', authMiddleware, async (req, res) => {
 
 app.get('/api/marketplace/listings', authMiddleware, async (req, res) => {
   try {
-    let listings = await readJSON(path.join(DATA_PATH, 'marketplace.json'));
-    // Add sample listings if empty
+    let listings = await readJSON(MARKETPLACE_FILE);
     if (listings.length === 0) {
       listings = [
         { id: '1', name: 'WhatsApp Auto-Responder', description: 'AI-powered WhatsApp reply bot', price: 49, category: 'automation', sales: 234 },
         { id: '2', name: 'CV Screener Pro', description: 'AI that filters and ranks candidates', price: 99, category: 'hr', sales: 156 },
-        { id: '3', name: 'Email Campaign AI', description: 'Automated email marketing', price: 79, category: 'marketing', sales: 89 }
+        { id: '3', name: 'Email Campaign AI', description: 'Automated email marketing', price: 79, category: 'marketing', sales: 89 },
+        { id: '4', name: 'Invoice Automation', description: 'Auto-generate and send invoices', price: 39, category: 'finance', sales: 312 }
       ];
-      await writeJSON(path.join(DATA_PATH, 'marketplace.json'), listings);
+      await writeJSON(MARKETPLACE_FILE, listings);
     }
     res.json({ success: true, data: listings });
   } catch (error) {
@@ -666,9 +693,25 @@ app.get('/api/marketplace/listings', authMiddleware, async (req, res) => {
   }
 });
 
-// Health check
+// Health check for Heroku
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', uptime: process.uptime(), timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'healthy', 
+    uptime: process.uptime(), 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Serve HTML for root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start server
@@ -676,4 +719,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Bloo AI Server running on port ${PORT}`);
   console.log(`📁 Data directory: ${DATA_PATH}`);
   console.log(`🌍 Access at: http://localhost:${PORT}`);
+  console.log(`🤖 AI Agents: CEO | HR | Support | Sales | Accountant`);
 });
