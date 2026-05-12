@@ -3,156 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloo AI - Business Operating System</title>
+    <title>Bloo AI - Business OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-container { height: 400px; overflow-y: auto; }
+        .glass-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
     
-    <nav class="bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <span class="text-white font-bold text-xl">B</span>
-                    </div>
-                    <span class="text-white font-bold text-xl">Bloo AI</span>
-                    <span class="text-xs text-purple-300 ml-2">Heroku Edition</span>
-                </div>
-                <div id="nav-buttons" class="flex space-x-3">
-                    <button onclick="showLogin()" class="px-5 py-2 text-white border border-white/30 rounded-lg hover:bg-white/10 transition">Login</button>
-                    <button onclick="showRegister()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-semibold hover:shadow-lg transition">Register</button>
-                </div>
-                <div id="nav-user" class="hidden flex items-center space-x-4">
-                    <span id="user-email" class="text-white text-sm"></span>
-                    <span id="user-plan" class="px-3 py-1 bg-purple-600 rounded-full text-xs font-semibold"></span>
-                    <button onclick="logout()" class="px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition text-sm">Logout</button>
-                </div>
+    <nav class="bg-black/30 backdrop-blur-md p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="text-white text-xl font-bold">Bloo AI</div>
+            <div id="nav-buttons">
+                <button onclick="showLogin()" class="px-4 py-2 bg-purple-600 rounded-lg text-white">Login</button>
+                <button onclick="showRegister()" class="px-4 py-2 bg-blue-600 rounded-lg text-white ml-2">Register</button>
+            </div>
+            <div id="nav-user" class="hidden text-white">
+                <span id="user-email"></span>
+                <button onclick="logout()" class="ml-4 px-3 py-1 bg-red-500 rounded">Logout</button>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto px-6 py-8">
-        
-        <!-- Auth Container -->
-        <div id="auth-container" class="fade-in">
-            <!-- Login Form -->
-            <div id="login-form" class="max-w-md mx-auto glass-card rounded-2xl shadow-2xl p-8 border border-white/20">
-                <h2 class="text-3xl font-bold text-center text-white mb-2">Welcome Back</h2>
-                <p class="text-center text-purple-200 mb-8">Login to your Bloo AI dashboard</p>
-                
-                <input type="email" id="login-email" placeholder="Email address" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 mb-4 focus:outline-none focus:border-purple-500">
-                <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 mb-6 focus:outline-none focus:border-purple-500">
-                
-                <button onclick="login()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-semibold hover:shadow-lg transition">Login</button>
-                
-                <p class="text-center text-white/60 mt-6">Don't have an account? <button onclick="showRegister()" class="text-purple-400 hover:underline">Register</button></p>
-            </div>
-
-            <!-- Register Form -->
-            <div id="register-form" class="hidden max-w-md mx-auto glass-card rounded-2xl shadow-2xl p-8 border border-white/20">
-                <h2 class="text-3xl font-bold text-center text-white mb-2">Create Account</h2>
-                <p class="text-center text-purple-200 mb-8">Start your AI journey today</p>
-                
-                <input type="text" id="reg-business" placeholder="Business name" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 mb-4 focus:outline-none focus:border-purple-500">
-                <input type="email" id="reg-email" placeholder="Email address" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 mb-4 focus:outline-none focus:border-purple-500">
-                <input type="password" id="reg-password" placeholder="Password (min 6 chars)" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 mb-4 focus:outline-none focus:border-purple-500">
-                
-                <select id="reg-plan" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white mb-6">
-                    <option value="small">Small Business - $50/month</option>
-                    <option value="growth">Growth - $500/month</option>
-                    <option value="enterprise">Enterprise - $10,000/month</option>
-                </select>
-                
-                <button onclick="register()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-semibold hover:shadow-lg transition">Register</button>
-                
-                <p class="text-center text-white/60 mt-6">Already have an account? <button onclick="showLogin()" class="text-purple-400 hover:underline">Login</button></p>
-            </div>
+    <div class="container mx-auto px-4 py-8">
+        <!-- Login Form -->
+        <div id="login-form" class="max-w-md mx-auto glass-card rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-white mb-4">Login</h2>
+            <input type="email" id="login-email" placeholder="Email" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+            <input type="password" id="login-password" placeholder="Password" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+            <button onclick="login()" class="w-full p-3 bg-purple-600 rounded-lg text-white font-bold">Login</button>
+            <p class="text-white/60 text-center mt-4">No account? <button onclick="showRegister()" class="text-purple-400">Register</button></p>
         </div>
 
-        <!-- Dashboard Container -->
-        <div id="dashboard-container" class="hidden fade-in">
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="glass-card rounded-xl p-6 border border-white/20">
-                    <div class="text-purple-300 text-sm mb-1">Revenue</div>
-                    <div class="text-3xl font-bold text-white" id="stat-revenue">$0</div>
+        <!-- Register Form -->
+        <div id="register-form" class="hidden max-w-md mx-auto glass-card rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-white mb-4">Register</h2>
+            <input type="text" id="reg-business" placeholder="Business Name" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+            <input type="email" id="reg-email" placeholder="Email" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+            <input type="password" id="reg-password" placeholder="Password (min 6 chars)" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+            <select id="reg-plan" class="w-full p-3 rounded-lg mb-3 bg-white/10 text-white">
+                <option value="small">Small - $50/mo</option>
+                <option value="growth">Growth - $500/mo</option>
+            </select>
+            <button onclick="register()" class="w-full p-3 bg-purple-600 rounded-lg text-white font-bold">Register</button>
+            <p class="text-white/60 text-center mt-4">Have account? <button onclick="showLogin()" class="text-purple-400">Login</button></p>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-card rounded-xl p-6">
+                    <div class="text-purple-300">Revenue</div>
+                    <div class="text-2xl font-bold text-white" id="stat-revenue">$0</div>
                 </div>
-                <div class="glass-card rounded-xl p-6 border border-white/20">
-                    <div class="text-purple-300 text-sm mb-1">AI Agents</div>
-                    <div class="text-3xl font-bold text-white">5</div>
+                <div class="glass-card rounded-xl p-6">
+                    <div class="text-purple-300">Messages</div>
+                    <div class="text-2xl font-bold text-white" id="stat-messages">0</div>
                 </div>
-                <div class="glass-card rounded-xl p-6 border border-white/20">
-                    <div class="text-purple-300 text-sm mb-1">Automations</div>
-                    <div class="text-3xl font-bold text-white" id="stat-automations">0</div>
-                </div>
-                <div class="glass-card rounded-xl p-6 border border-white/20">
-                    <div class="text-purple-300 text-sm mb-1">Messages</div>
-                    <div class="text-3xl font-bold text-white" id="stat-messages">0</div>
+                <div class="glass-card rounded-xl p-6">
+                    <div class="text-purple-300">Automations</div>
+                    <div class="text-2xl font-bold text-white" id="stat-automations">0</div>
                 </div>
             </div>
 
-            <div class="flex space-x-2 mb-6 border-b border-white/20 overflow-x-auto">
-                <button onclick="showTab('ceo')" id="tab-ceo-btn" class="px-6 py-3 text-white font-semibold border-b-2 border-purple-500">AI CEO</button>
-                <button onclick="showTab('hr')" id="tab-hr-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">AI HR</button>
-                <button onclick="showTab('support')" id="tab-support-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">AI Support</button>
-                <button onclick="showTab('sales')" id="tab-sales-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">AI Sales</button>
-                <button onclick="showTab('accountant')" id="tab-accountant-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">AI Accountant</button>
-                <button onclick="showTab('automation')" id="tab-automation-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">Automation</button>
-                <button onclick="showTab('marketplace')" id="tab-marketplace-btn" class="px-6 py-3 text-white/70 font-semibold hover:text-white transition">Marketplace</button>
-            </div>
-
-            <!-- Tab Contents (simplified for brevity - same as previous HTML) -->
-            <div id="ceo-tab" class="tab-content glass-card rounded-xl p-6 border border-white/20">
-                <h3 class="text-2xl font-bold text-white mb-4">AI CEO Strategy Advisor</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <input type="number" id="ceo-revenue" placeholder="Revenue ($)" class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <input type="number" id="ceo-costs" placeholder="Costs ($)" class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <input type="number" id="ceo-customers" placeholder="Customers" class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-xl font-bold text-white mb-4">AI CEO Advisor</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="number" id="revenue" placeholder="Revenue ($)" class="p-3 rounded-lg bg-white/10 text-white">
+                    <input type="number" id="costs" placeholder="Costs ($)" class="p-3 rounded-lg bg-white/10 text-white">
+                    <input type="number" id="customers" placeholder="Customers" class="p-3 rounded-lg bg-white/10 text-white">
                 </div>
-                <button onclick="getCEOAdvice()" class="px-6 py-3 bg-purple-600 rounded-lg text-white font-semibold">Get Advice</button>
-                <div id="ceo-result" class="mt-6 hidden"><pre id="ceo-analysis" class="text-purple-200"></pre></div>
+                <button onclick="getCEOAdvice()" class="px-6 py-2 bg-purple-600 rounded-lg text-white">Get AI Advice</button>
+                <div id="advice-result" class="mt-4 text-purple-200"></div>
             </div>
-
-            <!-- Other tabs similar structure - I'll include full JavaScript below -->
         </div>
     </div>
 
     <script>
         const API_URL = '';
         let authToken = localStorage.getItem('token');
-        
-        if (authToken) { showDashboard(); loadDashboardStats(); }
-        
+
+        if (authToken) {
+            showDashboard();
+            loadStats();
+        }
+
         async function login() {
             const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: document.getElementById('login-email').value, password: document.getElementById('login-password').value })
+                body: JSON.stringify({
+                    email: document.getElementById('login-email').value,
+                    password: document.getElementById('login-password').value
+                })
             });
             const data = await res.json();
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
                 authToken = data.token;
                 showDashboard();
-                loadDashboardStats();
-            } else alert('Login failed');
+                loadStats();
+            } else {
+                alert('Login failed: ' + (data.error || 'Check credentials'));
+            }
         }
-        
+
         async function register() {
             const res = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    email: document.getElementById('reg-email').value, 
+                body: JSON.stringify({
+                    email: document.getElementById('reg-email').value,
                     password: document.getElementById('reg-password').value,
                     businessName: document.getElementById('reg-business').value,
                     plan: document.getElementById('reg-plan').value
@@ -161,96 +122,80 @@
             const data = await res.json();
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
                 authToken = data.token;
                 showDashboard();
-                loadDashboardStats();
-            } else alert('Registration failed');
+                loadStats();
+            } else {
+                alert('Registration failed: ' + (data.error || 'Try different email'));
+            }
         }
-        
-        function logout() { localStorage.clear(); authToken = null; showAuth(); }
-        function showLogin() { document.getElementById('login-form').classList.remove('hidden'); document.getElementById('register-form').classList.add('hidden'); }
-        function showRegister() { document.getElementById('login-form').classList.add('hidden'); document.getElementById('register-form').classList.remove('hidden'); }
-        function showAuth() { document.getElementById('auth-container').classList.remove('hidden'); document.getElementById('dashboard-container').classList.add('hidden'); document.getElementById('nav-buttons').classList.remove('hidden'); document.getElementById('nav-user').classList.add('hidden'); }
-        function showDashboard() { 
-            document.getElementById('auth-container').classList.add('hidden'); 
-            document.getElementById('dashboard-container').classList.remove('hidden'); 
-            document.getElementById('nav-buttons').classList.add('hidden'); 
+
+        function logout() {
+            localStorage.clear();
+            authToken = null;
+            showAuth();
+        }
+
+        function showLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function showAuth() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('nav-buttons').classList.remove('hidden');
+            document.getElementById('nav-user').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('nav-buttons').classList.add('hidden');
             document.getElementById('nav-user').classList.remove('hidden');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            document.getElementById('user-email').innerText = user.email || 'User';
-            document.getElementById('user-plan').innerText = user.plan || 'Small';
         }
-        
-        function showTab(tab) {
-            const tabs = ['ceo', 'hr', 'support', 'sales', 'accountant', 'automation', 'marketplace'];
-            tabs.forEach(t => {
-                document.getElementById(`${t}-tab`).classList.add('hidden');
-                document.getElementById(`tab-${t}-btn`).classList.remove('border-purple-500', 'text-white');
-                document.getElementById(`tab-${t}-btn`).classList.add('text-white/70');
-            });
-            document.getElementById(`${tab}-tab`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}-btn`).classList.add('border-purple-500', 'text-white');
-            document.getElementById(`tab-${tab}-btn`).classList.remove('text-white/70');
-            if (tab === 'marketplace') loadMarketplace();
-            if (tab === 'automation') loadAutomations();
-        }
-        
+
         async function getCEOAdvice() {
+            const revenue = parseFloat(document.getElementById('revenue').value) || 10000;
+            const costs = parseFloat(document.getElementById('costs').value) || 7000;
+            const customers = parseInt(document.getElementById('customers').value) || 100;
+
             const res = await fetch(`${API_URL}/api/ai/ceo/advice`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-                body: JSON.stringify({ 
-                    revenue: parseFloat(document.getElementById('ceo-revenue').value) || 10000,
-                    costs: parseFloat(document.getElementById('ceo-costs').value) || 7000,
-                    customers: parseInt(document.getElementById('ceo-customers').value) || 100
-                })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ revenue, costs, customers })
             });
             const data = await res.json();
             if (data.success) {
-                document.getElementById('ceo-result').classList.remove('hidden');
-                document.getElementById('ceo-analysis').innerText = JSON.stringify(data.data, null, 2);
+                document.getElementById('advice-result').innerHTML = `
+                    <pre class="whitespace-pre-wrap">${JSON.stringify(data.data, null, 2)}</pre>
+                `;
             }
         }
-        
-        async function loadDashboardStats() {
-            const res = await fetch(`${API_URL}/api/dashboard/stats`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+
+        async function loadStats() {
+            const res = await fetch(`${API_URL}/api/dashboard/stats`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
             const data = await res.json();
             if (data.success) {
                 document.getElementById('stat-revenue').innerText = `$${data.data.business?.revenue || 0}`;
-                document.getElementById('stat-automations').innerText = data.data.stats.totalAutomations;
                 document.getElementById('stat-messages').innerText = data.data.stats.totalMessages;
+                document.getElementById('stat-automations').innerText = data.data.stats.totalAutomations;
             }
         }
-        
-        async function loadAutomations() {
-            const res = await fetch(`${API_URL}/api/automation/list`, { headers: { 'Authorization': `Bearer ${authToken}` } });
-            const data = await res.json();
-            if (data.success) {
-                const container = document.getElementById('automations-container');
-                if (container) {
-                    container.innerHTML = data.data.map(a => `<div class="bg-white/5 rounded-lg p-2 mb-2">${a.trigger} → ${a.action} (Runs: ${a.runs || 0})</div>`).join('');
-                }
-            }
-        }
-        
-        async function loadMarketplace() {
-            const res = await fetch(`${API_URL}/api/marketplace/listings`, { headers: { 'Authorization': `Bearer ${authToken}` } });
-            const data = await res.json();
-            if (data.success) {
-                const container = document.getElementById('marketplace-listings');
-                if (container) {
-                    container.innerHTML = data.data.map(item => `<div class="bg-white/5 rounded-xl p-4"><h4 class="text-white font-bold">${item.name}</h4><p class="text-purple-200">$${item.price}</p></div>`).join('');
-                }
-            }
-        }
-        
-        // Quick functions for other tabs (similar pattern)
-        async function analyzeCV() { alert('HR Agent: Use the form fields in HR tab'); }
-        async function sendSupportMessage() { alert('Support: Type message in chat'); }
-        async function generateOutreach() { alert('Sales: Fill prospect details'); }
-        async function analyzeFinances() { alert('Accountant: Analyzing...'); }
-        async function createAutomation() { alert('Automation: Select trigger and action'); }
     </script>
 </body>
 </html>
