@@ -49,3 +49,29 @@
   "author": "Bloo AI Enterprise",
   "license": "MIT"
 }
+
+
+
+{
+  "name": "bloo-ai-complete",
+  "version": "4.0.0",
+  "description": "Bloo AI - Complete Working System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.1.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}
